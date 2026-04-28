@@ -139,15 +139,15 @@ CREATE POLICY "profiles_select_all"   ON public.profiles FOR SELECT USING (true)
 CREATE POLICY "profiles_update_own"   ON public.profiles FOR UPDATE USING (auth.uid() = id);
 CREATE POLICY "profiles_delete_own"   ON public.profiles FOR DELETE USING (auth.uid() = id);
 
--- Helper: reads board_members as SECURITY DEFINER to avoid RLS circular recursion
+-- SECURITY DEFINER helpers — bypass RLS to prevent board_members ↔ boards recursion
 CREATE OR REPLACE FUNCTION public.get_my_board_ids()
-RETURNS SETOF UUID
-LANGUAGE SQL
-SECURITY DEFINER
-STABLE
-SET search_path = public
-AS $$
+RETURNS SETOF UUID LANGUAGE SQL SECURITY DEFINER STABLE SET search_path = public AS $$
   SELECT board_id FROM public.board_members WHERE user_id = auth.uid()
+$$;
+
+CREATE OR REPLACE FUNCTION public.get_my_admin_board_ids()
+RETURNS SETOF UUID LANGUAGE SQL SECURITY DEFINER STABLE SET search_path = public AS $$
+  SELECT board_id FROM public.board_members WHERE user_id = auth.uid() AND permission = 'admin'
 $$;
 
 -- BOARDS policies
@@ -170,16 +170,16 @@ CREATE POLICY "members_select" ON public.board_members FOR SELECT USING (
 );
 CREATE POLICY "members_insert" ON public.board_members FOR INSERT WITH CHECK (
   board_id IN (SELECT id FROM public.boards WHERE owner_id = auth.uid())
-  OR board_id IN (SELECT board_id FROM public.board_members WHERE user_id = auth.uid() AND permission = 'admin')
+  OR board_id IN (SELECT public.get_my_admin_board_ids())
 );
 CREATE POLICY "members_update" ON public.board_members FOR UPDATE USING (
   board_id IN (SELECT id FROM public.boards WHERE owner_id = auth.uid())
-  OR board_id IN (SELECT board_id FROM public.board_members WHERE user_id = auth.uid() AND permission = 'admin')
+  OR board_id IN (SELECT public.get_my_admin_board_ids())
 );
 CREATE POLICY "members_delete" ON public.board_members FOR DELETE USING (
   user_id = auth.uid()
   OR board_id IN (SELECT id FROM public.boards WHERE owner_id = auth.uid())
-  OR board_id IN (SELECT board_id FROM public.board_members WHERE user_id = auth.uid() AND permission = 'admin')
+  OR board_id IN (SELECT public.get_my_admin_board_ids())
 );
 
 -- COLUMNS policies
