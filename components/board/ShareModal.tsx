@@ -59,7 +59,7 @@ export default function ShareModal({ board, members: initialMembers, ownerProfil
     const { error } = await supabase.from('board_members').insert({
       board_id: board.id, user_id: profile.id, permission: invitePerm, invited_by: currentUserId
     })
-    if (error) { setInviteError('Davet gönderilemedi'); setInviting(false); return }
+    if (error) { setInviteError(`Davet gönderilemedi: ${error.message}`); setInviting(false); return }
     setMembers(prev => [...prev, { board_id: board.id, user_id: profile.id, permission: invitePerm, invited_by: currentUserId, created_at: new Date().toISOString(), profile }])
     setInviteUsername(''); setInviting(false)
   }
