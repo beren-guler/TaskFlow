@@ -24,7 +24,12 @@ export default function CardComponent({ card, onClick, isDragging: isDraggingPro
   return (
     <div
       ref={setNodeRef}
-      style={{ transform: CSS.Transform.toString(transform), transition }}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        borderLeftColor: editorColor || 'transparent',
+        borderLeftWidth: editorColor ? '3px' : '1px',
+      }}
       {...attributes}
       {...listeners}
       onClick={onClick}
@@ -34,12 +39,6 @@ export default function CardComponent({ card, onClick, isDragging: isDraggingPro
         dragging ? 'opacity-30 scale-105 shadow-2xl rotate-1' : 'opacity-100',
         'border border-transparent'
       ].join(' ')}
-      style={{
-        transform: CSS.Transform.toString(transform),
-        transition,
-        borderLeftColor: editorColor || 'transparent',
-        borderLeftWidth: editorColor ? '3px' : '1px',
-      }}
     >
       {/* Labels */}
       {card.labels && card.labels.length > 0 && (
